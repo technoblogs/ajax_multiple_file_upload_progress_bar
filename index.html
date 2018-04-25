@@ -1,0 +1,92 @@
+<html>
+<head>
+	<script defer src="https://use.fontawesome.com/releases/v5.0.9/js/all.js" integrity="sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl" crossorigin="anonymous"></script>
+	<script
+  src="https://code.jquery.com/jquery-3.3.1.js"
+  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+  crossorigin="anonymous"></script>
+
+</head>
+<body>
+	<body style="background: #d8d2d2;">
+		<form>
+			<div id="dragandrophandler" style="border: 2px #478FCA dashed;width: 35%;padding: 5%;margin:0 auto;text-align: center; margin-top: 100px;">
+				<i class="fas fa-cloud-upload-alt" style="font-size: 8em;color:#478FCA;"></i>
+				
+			</div>
+			<div style="border:1px solid #478FCA;margin:20px auto;width: 45%;display:none;" id="file_upload_progress_bar">
+  					
+			</div>
+			
+		</form>
+	</body>
+
+</html>
+
+
+
+<script>
+var obj = $("#dragandrophandler");
+obj.on('dragenter', function (e)
+{
+    e.stopPropagation();
+    e.preventDefault();
+    //$(this).css('border', '2px solid #0B85A1');
+});
+obj.on('dragover', function (e)
+{
+    e.stopPropagation();
+    e.preventDefault();
+});
+
+var filesForUpload = [];
+obj.on('drop', function (e)
+{
+    e.preventDefault();
+    var files = e.originalEvent.dataTransfer.files;
+    for (var current_file = 0; current_file < files.length; current_file++)
+    {
+        var fd = new FormData($('#hiddenElements')[0]);
+        fd.append('filesToBeUpload', files[current_file]);
+        filesForUpload.push(fd);
+        var total_files = parseInt(filesForUpload.length);
+    }
+    var uploadingStartPercentage = parseInt(100 / total_files);
+    uploadingPercentage = uploadingStartPercentage;
+    sendFileToServer(filesForUpload, total_files, 1, uploadingStartPercentage, uploadingPercentage);
+    
+});
+
+function sendFileToServer(filesForUpload,total_files, currentFile, uploadingStartPercentage, uploadingPercentage)
+{
+    var data = filesForUpload[0];
+    filesForUpload.splice(0, 1);
+    $("#file_upload_progress_bar").show();
+    $.ajax({
+        url: 'upload.php',
+        type: "POST",
+        data: data, 
+        contentType: false, 
+        cache: false,
+        processData: false,
+        success: function (responce){},
+        error: function (request, status, error) { alert("File upload failed") },
+        complete: function () {
+            console.log(uploadingPercentage);
+            $("#file_upload_progress_bar").html('<div  style="height:24px;width:'+uploadingPercentage+'%;background: #478FCA;color:#fff;padding-top: 6px;"></div>');
+            if (filesForUpload.length > 0) {
+                sendFileToServer(filesForUpload,total_files,currentFile+1,uploadingStartPercentage,uploadingStartPercentage+uploadingPercentage);
+            } 
+            else {
+                $("#file_upload_progress_bar").html('<div  style="height:24px;width:100%;background: #478FCA;color:#fff;padding-top: 6px;"></div>');
+                //window.location = "/";
+            }
+        }
+    });
+
+}
+
+
+
+
+</script>
